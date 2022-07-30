@@ -19,6 +19,14 @@ type Server struct {
 	Port int
 }
 
+func EventHandler(conn *net.TCPConn, buf []byte, length int) error {
+	if _, err := conn.Write(buf[:length]); err != nil {
+		fmt.Println("write back buf error:", err)
+		return err
+	}
+	return nil
+}
+
 func (server *Server) Start() {
 	fmt.Printf("[Start] Server listen at IP: %s, Port: %d, start...\n", server.IP, server.Port)
 	// 1.获取一个TCP的addr
@@ -34,6 +42,8 @@ func (server *Server) Start() {
 		return
 	}
 	fmt.Println("Server start success...")
+	var connId uint32 = 0
+
 	// 3.阻塞的等待客户端连接，处理客户端连接业务
 	for {
 		// 若客户端连接，阻塞会返回
@@ -42,21 +52,9 @@ func (server *Server) Start() {
 			fmt.Println("accept error", err)
 			continue
 		}
-		go func() {
-			for {
-				buf := make([]byte, 512)
-				cnt, err := conn.Read(buf)
-				if err != nil {
-					fmt.Println("recv buf error:", err)
-					conn.Close()
-					break
-				}
-				if _, err := conn.Write(buf[:cnt]); err != nil {
-					fmt.Println("write back buf error:", err)
-					continue
-				}
-			}
-		}()
+		handleConn := NewConn(conn, connId, EventHandler)
+		handleConn.Start()
+		connId++
 	}
 }
 
@@ -75,10 +73,10 @@ func (server *Server) Serve() {
 // golang中接口类型是引用
 func NewServer(name string) ziface.IServer {
 	server := &Server{
-		Name: name,
+		Name:      name,
 		IpVersion: "tcp4",
-		IP: "0.0.0.0",
-		Port: 8999,
+		IP:        "0.0.0.0",
+		Port:      8999,
 	}
 	return server
 }
