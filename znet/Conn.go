@@ -17,18 +17,18 @@ type Conn struct {
 	// 当前连接的状态
 	isClosed bool
 
-	// 当前连接绑定的业务处理函数
-	handler ziface.EventHandler
-
 	// 通知连接状态channel
 	ExitChan chan bool
+
+	// 连接绑定的路由
+	Router ziface.IRouter
 }
 
-func NewConn(conn *net.TCPConn, connId uint32, handler ziface.EventHandler) *Conn {
+func NewConn(conn *net.TCPConn, connId uint32, router ziface.IRouter) *Conn {
 	c := &Conn{
 		Conn:     conn,
 		ConnId:   connId,
-		handler:  handler,
+		Router:   router,
 		isClosed: false,
 		ExitChan: make(chan bool, 1),
 	}
@@ -45,7 +45,6 @@ func (conn *Conn) read() {
 	fmt.Println("Conn read event start...")
 	defer fmt.Println("read end, connId:", conn.ConnId, "remote addr:", conn.RemoteAddr())
 	defer conn.Stop()
-
 	for {
 		// 读取客户端数据
 		buf := make([]byte, 512)
@@ -54,11 +53,15 @@ func (conn *Conn) read() {
 			fmt.Println("recv buf error:", readErr)
 			break
 		}
-		// 调用当前连接绑定的EventHandler
-		if handlerErr := conn.handler(conn.Conn, buf, length); handlerErr != nil {
-			fmt.Println("handle occur error:", handlerErr, ", connId:", conn.ConnId)
-			break
+		// 解析当前连接的请求数据
+		request := Request{
+			conn:  conn,
+			param: buf[:length],
 		}
+		// 调用当前连接绑定的EventHandler
+		conn.Router.PreHandle(&request)
+		conn.Router.Handle(&request)
+		conn.Router.PostHandle(&request)
 	}
 }
 

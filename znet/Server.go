@@ -17,14 +17,8 @@ type Server struct {
 	IP string
 	// 服务器监听的端口
 	Port int
-}
-
-func EventHandler(conn *net.TCPConn, buf []byte, length int) error {
-	if _, err := conn.Write(buf[:length]); err != nil {
-		fmt.Println("write back buf error:", err)
-		return err
-	}
-	return nil
+	// 服务器路由
+	Router ziface.IRouter
 }
 
 func (server *Server) Start() {
@@ -52,7 +46,7 @@ func (server *Server) Start() {
 			fmt.Println("accept error", err)
 			continue
 		}
-		handleConn := NewConn(conn, connId, EventHandler)
+		handleConn := NewConn(conn, connId, server.Router)
 		handleConn.Start()
 		connId++
 	}
@@ -69,6 +63,11 @@ func (server *Server) Serve() {
 	select {}
 }
 
+func (server *Server) RegisterRouter(router ziface.IRouter) {
+	server.Router = router
+	fmt.Println("Register router success...")
+}
+
 // NewServer 初始化Server
 // golang中接口类型是引用
 func NewServer(name string) ziface.IServer {
@@ -77,6 +76,7 @@ func NewServer(name string) ziface.IServer {
 		IpVersion: "tcp4",
 		IP:        "0.0.0.0",
 		Port:      8999,
+		Router:    nil,
 	}
 	return server
 }
