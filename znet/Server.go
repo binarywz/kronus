@@ -1,6 +1,7 @@
 package znet
 
 import (
+	"binary/wz/kronus/utils"
 	"fmt"
 	"net"
 
@@ -70,12 +71,12 @@ func (server *Server) RegisterRouter(router ziface.IRouter) {
 
 // NewServer 初始化Server
 // golang中接口类型是引用
-func NewServer(name string) ziface.IServer {
+func NewServer() ziface.IServer {
 	server := &Server{
-		Name:      name,
+		Name:      utils.ServerConfig.Name,
 		IpVersion: "tcp4",
-		IP:        "0.0.0.0",
-		Port:      8999,
+		IP:        utils.ServerConfig.Host,
+		Port:      utils.ServerConfig.Port,
 		Router:    nil,
 	}
 	return server

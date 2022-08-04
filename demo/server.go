@@ -36,7 +36,7 @@ func (router *PingRouter) PostHandle(request ziface.IRequest) {
 
 func main() {
 	// 创建一个Server句柄
-	server := znet.NewServer("[kronus v0.1]")
+	server := znet.NewServer()
 	server.RegisterRouter(&PingRouter{})
 	// 启动server
 	server.Serve()

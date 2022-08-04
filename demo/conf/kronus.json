@@ -1,0 +1,8 @@
+{
+  "Host": "127.0.0.1",
+  "Port": 9000,
+  "Name": "Kronus Server",
+  "Version": "v1.0",
+  "MaxConn": 3,
+  "MaxPackageSize": 512
+}
